@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from 'tdesign-react';
-import { Bot, LayoutDashboard, FileText, ScanSearch, CalendarClock, Activity, Pause, Play, RotateCcw } from 'lucide-react';
+import { Bot, LayoutDashboard, FileText, ScanSearch, CalendarClock, Activity, Pause, Play, RotateCcw, Filter } from 'lucide-react';
 import { useAutomation } from '../hooks/useAutomation';
 import { APP_CONFIG } from '../config';
 import { OverviewTab } from '../components/recruit/OverviewTab';
