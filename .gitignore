@@ -6,6 +6,7 @@ dist/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+vite.config.*.timestamp-*.mjs
 
 # compiled server artifacts (run via tsx, no emit needed)
 server/*.js
