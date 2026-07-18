@@ -1,0 +1,29 @@
+# deps
+node_modules/
+
+# build output
+dist/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+vite.config.*.timestamp-*.mjs
+
+# compiled server artifacts (run via tsx, no emit needed)
+server/*.js
+server/*.d.ts
+
+# runtime data (sqlite)
+data/
+
+# env / secrets
+.env
+.env.local
+
+# os / editor
+.DS_Store
+Thumbs.db
+*.log
+
+# temp
+nul
+proc*.txt
