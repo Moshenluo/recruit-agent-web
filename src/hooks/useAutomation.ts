@@ -288,6 +288,7 @@ export function useAutomation() {
   }, [dispatch]);
 
   useEffect(() => {
+    if (DEMO) return; // 演示模式走纯前端引擎，不轮询后端 API
     const t = setInterval(() => {
       fetchCandidates();
       fetchSchedule();

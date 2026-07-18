@@ -21,6 +21,8 @@ const DEFAULT_REQ: Record<string, string> = {
   数据分析师: '精通 SQL 与 Python，熟悉指标体系搭建与数据建模，有业务分析经验优先',
   算法工程师: '掌握 NLP 与深度学习，熟悉主流训练框架，有落地项目优先',
   产品经理: '具备 B 端 / C 端产品规划能力，数据驱动，有 0-1 经验优先',
+  运营专员: '具备社群运营与内容策划能力，有增长活动经验优先',
+  HRBP: '熟悉组织发展与招聘全流程，具备沟通协调与数据分析能力优先',
 };
 
 export function AiScreeningTab({ candidates, screenings, generatePrompt, runScreening }: Props) {

@@ -16,6 +16,71 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import * as db from './db.js';
+import { query } from '@tencent-ai/agent-sdk';
+
+// ============= 真实 LLM 接入层（CodeBuddy SDK） =============
+// 仅在配置了 CODEBUDDY_API_KEY 时启用真实 AI；否则全部回退到规则引擎。
+// 任何异常 / 解析失败都返回 null，调用方据此使用规则引擎兜底，保证流程不中断。
+const LLM_ENABLED = !!process.env.CODEBUDDY_API_KEY;
+
+async function callLLM(prompt: string): Promise<string | null> {
+  if (!LLM_ENABLED) return null;
+  try {
+    const events = query({ prompt, model: process.env.CODEBUDDY_MODEL || undefined }) as any;
+    let out = '';
+    for await (const ev of events) {
+      const c = ev?.content ?? ev?.text ?? ev?.message ?? ev?.data;
+      if (typeof c === 'string') out += c;
+    }
+    return out.trim() || null;
+  } catch (e) {
+    console.error('[LLM] 调用失败，回退规则引擎：', e);
+    return null;
+  }
+}
+
+interface LLMVerdict {
+  confidence: number;
+  decision: 'pass' | 'review' | 'reject';
+  matched: string[];
+  note: string;
+}
+
+// 从 LLM 输出中解析 { confidence, decision, matched_skills, note }；兼容 JSON 与非结构化文本
+function parseVerdict(text: string): LLMVerdict | null {
+  if (!text) return null;
+  try {
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) {
+      const j = JSON.parse(m[0]);
+      if (typeof j.confidence === 'number') {
+        const conf = Math.max(0, Math.min(100, Math.round(j.confidence)));
+        const d = String(j.decision || (conf >= 80 ? 'pass' : conf >= 40 ? 'review' : 'reject'));
+        const decision: 'pass' | 'review' | 'reject' = /reject|淘汰|不通过/i.test(d)
+          ? 'reject'
+          : /review|复核|人工/i.test(d)
+            ? 'review'
+            : 'pass';
+        return {
+          confidence: conf,
+          decision,
+          matched: Array.isArray(j.matched_skills ?? j.matched) ? (j.matched_skills ?? j.matched) : [],
+          note: typeof j.note === 'string' ? j.note : '由 LLM 结构化输出解析',
+        };
+      }
+    }
+  } catch {
+    /* ignore，走下方正则兜底 */
+  }
+  const cm = text.match(/置信度[^\d]*(\d{1,3})/);
+  const conf = cm ? Math.max(0, Math.min(100, parseInt(cm[1], 10))) : NaN;
+  if (Number.isNaN(conf)) return null;
+  let decision: 'pass' | 'review' | 'reject' = conf >= 80 ? 'pass' : conf >= 40 ? 'review' : 'reject';
+  if (/淘汰|不通过|reject/i.test(text)) decision = 'reject';
+  else if (/直接过|通过|pass/i.test(text)) decision = 'pass';
+  else if (/人工|复核|review/i.test(text)) decision = 'review';
+  return { confidence: conf, decision, matched: [], note: '由 LLM 文本解析得到（非结构化输出）' };
+}
 
 // ============= 类型定义 =============
 
@@ -382,10 +447,10 @@ export function buildInitialScreeningPrompt(candidate: db.DbCandidate, requireme
  * 执行 AI 初筛：生成提示词 + 计算首轮置信度 + 分级决策。
  * 决策：>60 直接过（推进拉群协作）/ 35-59 人工复核（停留待 HR）/ <35 淘汰。
  */
-export function runAIInitialScreening(
+export async function runAIInitialScreening(
   candidateId: string,
   requirement?: string,
-): { ok: boolean; message: string; record?: ScreenRec; candidate?: any } {
+): Promise<{ ok: boolean; message: string; record?: ScreenRec; candidate?: any }> {
   const candidate = db.getCandidate(candidateId);
   if (!candidate) return { ok: false, message: '候选人不存在' };
   if (candidate.stage !== 'initial_screening') {
@@ -398,19 +463,37 @@ export function runAIInitialScreening(
   const profile = PROFILES.find((p) => p.name === candidate.name);
   const req = requirement || defaultRequirement(candidate.position, profile?.dept || '');
   const prompt = buildInitialScreeningPrompt(candidate, req);
-  const { confidence, matched } = computeInitialScreeningConfidence(candidate, req);
+
+  // 真实 LLM 解析（配置了 CODEBUDDY_API_KEY 时）；否则使用规则引擎兜底
+  let confidence: number | undefined;
+  let matched: string[] = [];
+  let llmNote: string | undefined;
+  if (LLM_ENABLED) {
+    const llmText = await callLLM(prompt);
+    const v = llmText ? parseVerdict(llmText) : null;
+    if (v) {
+      confidence = v.confidence;
+      matched = v.matched;
+      llmNote = v.note;
+    }
+  }
+  if (confidence === undefined) {
+    const r = computeInitialScreeningConfidence(candidate, req);
+    confidence = r.confidence;
+    matched = r.matched;
+  }
 
   let decision: 'pass' | 'review' | 'reject';
   let note: string;
   if (confidence >= 60) {
     decision = 'pass';
-    note = '初筛置信度 ≥60，AI 判定直接过，已自动推进至拉群协作';
+    note = llmNote ? `初筛置信度 ${confidence}%（LLM）：${llmNote}` : '初筛置信度 ≥60，AI 判定直接过，已自动推进至拉群协作';
   } else if (confidence >= 35) {
     decision = 'review';
-    note = '初筛置信度 35-59，建议人工复核，已挂起待 HR 确认';
+    note = llmNote ? `初筛置信度 ${confidence}%（LLM）：${llmNote}` : '初筛置信度 35-59，建议人工复核，已挂起待 HR 确认';
   } else {
     decision = 'reject';
-    note = '初筛置信度 <35，AI 判定淘汰';
+    note = llmNote ? `初筛置信度 ${confidence}%（LLM）：${llmNote}` : '初筛置信度 <35，AI 判定淘汰';
   }
 
   const rec = db.addScreeningRecord({
@@ -451,10 +534,10 @@ export function runAIInitialScreening(
  * 执行 AI 辅助二筛：生成提示词 + 计算置信度 + 分级决策。
  * 决策：>80 直接过（推进群面名单）/ 40-80 人工审核（停留待 HR）/ <40 淘汰。
  */
-export function runAIScreening(
+export async function runAIScreening(
   candidateId: string,
   deptRequirement?: string,
-): { ok: boolean; message: string; record?: ScreenRec; candidate?: any } {
+): Promise<{ ok: boolean; message: string; record?: ScreenRec; candidate?: any }> {
   const candidate = db.getCandidate(candidateId);
   if (!candidate) return { ok: false, message: '候选人不存在' };
   if (candidate.stage !== 'secondary_screening') {
@@ -467,19 +550,37 @@ export function runAIScreening(
   const profile = PROFILES.find((p) => p.name === candidate.name);
   const requirement = deptRequirement || defaultRequirement(candidate.position, profile?.dept || '');
   const prompt = buildScreeningPrompt(candidate, requirement);
-  const { confidence, matched } = computeScreeningConfidence(candidate, requirement);
+
+  // 真实 LLM 解析（配置了 CODEBUDDY_API_KEY 时）；否则使用规则引擎兜底
+  let confidence: number | undefined;
+  let matched: string[] = [];
+  let llmNote: string | undefined;
+  if (LLM_ENABLED) {
+    const llmText = await callLLM(prompt);
+    const v = llmText ? parseVerdict(llmText) : null;
+    if (v) {
+      confidence = v.confidence;
+      matched = v.matched;
+      llmNote = v.note;
+    }
+  }
+  if (confidence === undefined) {
+    const r = computeScreeningConfidence(candidate, requirement);
+    confidence = r.confidence;
+    matched = r.matched;
+  }
 
   let decision: 'pass' | 'review' | 'reject';
   let note: string;
   if (confidence >= 80) {
     decision = 'pass';
-    note = '置信度 ≥80，AI 判定直接过，已自动推进至群面名单';
+    note = llmNote ? `置信度 ${confidence}%（LLM）：${llmNote}` : '置信度 ≥80，AI 判定直接过，已自动推进至群面名单';
   } else if (confidence >= 40) {
     decision = 'review';
-    note = '置信度 40-79，建议人工审核，已挂起待 HR 复核';
+    note = llmNote ? `置信度 ${confidence}%（LLM）：${llmNote}` : '置信度 40-79，建议人工审核，已挂起待 HR 复核';
   } else {
     decision = 'reject';
-    note = '置信度 <40，AI 判定淘汰';
+    note = llmNote ? `置信度 ${confidence}%（LLM）：${llmNote}` : '置信度 <40，AI 判定淘汰';
   }
 
   const rec = db.addScreeningRecord({

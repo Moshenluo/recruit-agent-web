@@ -6,9 +6,11 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "tsx watch server/index.ts",
     "dev:client": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -p tsconfig.json && vite build",
+    "typecheck": "tsc -p tsconfig.json",
     "preview": "vite preview",
-    "server": "tsx server/index.ts"
+    "server": "tsx server/index.ts",
+    "verify:demo": "node scripts/page-verify.cjs"
   },
   "dependencies": {
     "@tdesign-react/aigc": "^0.1.0-alpha.1",

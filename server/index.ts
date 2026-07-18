@@ -1050,11 +1050,11 @@ app.get("/api/tencent-doc", (req, res) => {
 // ============= 提效 Agent：AI 辅助二筛 =============
 
 // 执行 AI 二筛（置信度分级）
-app.post("/api/ai-screening", (req, res) => {
+app.post("/api/ai-screening", async (req, res) => {
   try {
     const { candidateId, deptRequirement } = req.body || {};
     if (!candidateId) return res.status(400).json({ error: "缺少 candidateId" });
-    const result = automation.runAIScreening(candidateId, deptRequirement);
+    const result = await automation.runAIScreening(candidateId, deptRequirement);
     if (!result.ok) return res.status(400).json({ error: result.message });
     res.json(result);
   } catch (error: any) {
@@ -1088,11 +1088,11 @@ app.get("/api/screening-records", (req, res) => {
 // ============= 提效 Agent：AI 初筛（首轮筛选） =============
 
 // 执行 AI 初筛（首轮置信度分级）
-app.post("/api/ai-initial-screening", (req, res) => {
+app.post("/api/ai-initial-screening", async (req, res) => {
   try {
     const { candidateId, requirement } = req.body || {};
     if (!candidateId) return res.status(400).json({ error: "缺少 candidateId" });
-    const result = automation.runAIInitialScreening(candidateId, requirement);
+    const result = await automation.runAIInitialScreening(candidateId, requirement);
     if (!result.ok) return res.status(400).json({ error: result.message });
     res.json(result);
   } catch (error: any) {

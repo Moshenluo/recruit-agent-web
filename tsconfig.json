@@ -18,5 +18,20 @@
     "verbatimModuleSyntax": false
   },
   "include": ["src"],
+  "exclude": [
+    "src/pages/ChatPage.tsx",
+    "src/components/ChatMessages.tsx",
+    "src/components/ChatInput.tsx",
+    "src/components/NewChatView.tsx",
+    "src/components/NewChatDialog.tsx",
+    "src/components/SettingsPage.tsx",
+    "src/components/Sidebar.tsx",
+    "src/components/Header.tsx",
+    "src/components/AgentConfigDialog.tsx",
+    "src/components/PermissionDialog.tsx",
+    "src/components/InlinePermissionCard.tsx",
+    "src/components/ToolCallsCollapse.tsx",
+    "src/utils/iconMap.ts"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

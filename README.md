@@ -10,6 +10,7 @@
 ## 核心能力
 
 - **HR 简历收集上传** — HR 完成简历收集与上传（姓名/岗位/来源/联系方式/标签/可面试时间），Agent 接管后续
+- **简历拖拽 / 文件夹导入** — 在「腾讯文档」页可直接拖拽 `.txt`/`.md`/`.pdf` 简历，或选择整个文件夹批量导入；自动解析正文、提取姓名与技能标签并一键汇总至腾讯文档（PDF 解析走 CDN 动态加载 pdf.js，无本地依赖）
 - **腾讯文档自动聚合** — 所有候选人自动汇总成统一的「招聘简历库（腾讯文档）」格式，实时同步，HR/用人部门可随时查阅
 - **流程自动推进** — Agent 自动完成机械阶段：简历收集 → AI 初筛 → 拉群协作 → AI 二筛（含自动汇总腾讯文档）
 - **AI 初筛（首轮筛选）** — 对收集到的简历做**基础匹配度评估**并给出**置信度评价**：
@@ -69,7 +70,7 @@ Agent **只自动推进机械阶段**，把需要人判断的环节留给 HR，�
 ### 看板标签页
 
 1. **总览看板** — KPI / 招聘漏斗 / 异常面板 / 候选人速览 / 轻量干预
-2. **腾讯文档** — 左侧 HR 简历收集上传表单；右侧腾讯文档式简历库（自动同步）
+2. **腾讯文档** — 左侧支持**手工录入**、**拖拽 / 文件夹批量导入**（自动解析 PDF / 文本并提取技能标签）；右侧腾讯文档式简历库（自动同步）
 3. **AI 初筛** — 待初筛候选人列表 + 初筛工作台（岗位通用要求 / 生成提示词 / 运行初筛 / 结果）+ 初筛记录
 4. **AI 二筛** — 待二筛候选人列表 + 二筛工作台（部门需求 / 生成提示词 / 运行二筛 / 结果）+ 二筛记录
 5. **约面排期** — 面试官可约时间编辑 + 待约面 / 待复试候选人 + 面试 / 复试排期表
@@ -102,8 +103,9 @@ VITE_DEMO=true npx vite build      # 产出自包含 dist/（含种子数据与�
 # 静态托管 dist/ 即可，例如：npx vite preview --port 4173
 ```
 
-> 注意：直接用 `npm run build`（`tsc -b && vite build`）会先跑 `tsc -b`，
-> 模板自带部分类型错误会阻断构建；演示构建请直接 `npx vite build`（已带 `VITE_DEMO=true`）。
+> `npm run build` 现已可用：构建脚本改为 `tsc -p tsconfig.json && vite build`，
+> 仅对招聘应用代码做类型检查（模板自带的 Chat 组件已从 `tsconfig.json` 的 `exclude` 中剔除，不计入构建）。
+> 演示构建只需 `VITE_DEMO=true npm run build`。另有 `npm run verify:demo` 用真实浏览器一键验证 6 个标签页不白屏。
 
 ## API 端点
 
@@ -171,8 +173,8 @@ VITE_DEMO=true npx vite build      # 产出自包含 dist/（含种子数据与�
 
 ## 置信度与约面算法说明
 
-- **置信度（演示用规则引擎）**：基于岗位匹配、技能标签命中、来源等确定性规则计算 0–100 评分，并据此分级。
-  真实场景可替换为 CodeBuddy SDK 的 LLM 解析与评分（见 `server/automation.ts` 的 `parseEventWithLLM` 接入点）。
+- **置信度（规则引擎 / 真实 LLM 双轨）**：默认用确定性规则计算 0–100 评分；当后端配置了 `CODEBUDDY_API_KEY` 时，
+  自动切换为 **CodeBuddy SDK 真实 LLM 解析**（`server/automation.ts` 的 `callLLM` / `parseVerdict`，解析失败或超时自动回退规则引擎），实现真正的 AI 初筛 / 二筛。
 - **约面排期**：取求职者可面试时间与面试官可约时间的**交集**，按时间升序取最早可用时段；优先选择同部门面试官。
 - 演示零成本可运行（规则解析，无需 API Key）。
 
@@ -203,6 +205,13 @@ VITE_DEMO=true npx vite build          # 产物输出到 dist/，资源使用相
 npx gh-pages -d dist -b gh-pages -t -m "deploy: 智聘通 demo"
 # 仓库 Pages 已配置为 gh-pages 分支根目录，推送后自动上线
 ```
+
+### 自动部署（GitHub Actions）
+
+仓库已内置 `.github/workflows/deploy.yml`：向 `main` 分支 `push` 时自动执行
+`VITE_DEMO=true npm run build` 并发布到 `gh-pages` 分支，GitHub Pages 随即更新公网 Demo，无需手动操作。
+
+也可手动触发：仓库 `Actions → Deploy Demo to GitHub Pages → Run workflow`。
 
 
 
