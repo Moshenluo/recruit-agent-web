@@ -183,11 +183,28 @@ VITE_DEMO=true npx vite build      # 产出自包含 dist/（含种子数据与�
 
 ## 公网演示 Demo
 
-- **在线 Demo（CloudStudio 静态托管）**：https://e292f12c4bdd42b09d02257da64309e9.app.codebuddy.work
+- **在线 Demo（GitHub Pages 永久托管，推荐）**：https://moshenluo.github.io/recruit-agent-web/
 - **源码仓库（GitHub）**：https://github.com/Moshenluo/recruit-agent-web
+
+> 说明：早期曾用 CloudStudio 临时沙箱托管（链接 `e292f12c4bdd42b09d02257da64309e9.app.codebuddy.work`），
+> 但该沙箱会被回收/冷启，导致 `ERR_EMPTY_RESPONSE` 类「打不开」。现已改用 **GitHub Pages** 永久静态托管，
+> 跟随仓库 `gh-pages` 分支自动发布，稳定不掉线。
 
 Demo 为纯前端自包含版本，含完整种子数据：覆盖全部 11 个阶段、AI 初筛 / AI 二筛记录（按 `phase` 区分）、
 异常面板与约面 / 复试排期，首屏即自动运行，可直接在页面上体验「初筛 → 二筛 → 约面 → 复试」全流程。
+
+### 重新发布 Demo 到 GitHub Pages
+
+```bash
+# 1) 构建纯前端演示（无需后端）
+VITE_DEMO=true npx vite build          # 产物输出到 dist/，资源使用相对路径 ./assets
+
+# 2) 发布到 gh-pages 分支（首次需安装 gh-pages）
+npx gh-pages -d dist -b gh-pages -t -m "deploy: 智聘通 demo"
+# 仓库 Pages 已配置为 gh-pages 分支根目录，推送后自动上线
+```
+
+
 
 ## License
 
