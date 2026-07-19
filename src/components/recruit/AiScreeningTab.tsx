@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Button, Input, Textarea, Tag, MessagePlugin } from 'tdesign-react';
 import { ScanSearch, Sparkles, Play, History, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
 import type { Candidate, ScreenRecord } from '../../hooks/useAutomation';
@@ -43,6 +43,11 @@ export function AiScreeningTab({ candidates, screenings, generatePrompt, runScre
 
   const sel = pending.find((c) => c.id === selId) || pending[0] || null;
 
+  // 选中候选人变化时同步重置用人部门需求文本，避免遗留上一位的旧内容
+  useEffect(() => {
+    if (sel) setReq(DEFAULT_REQ[sel.position || ''] || '');
+  }, [sel?.id]);
+
   const selectCandidate = (c: Candidate) => {
     setSelId(c.id);
     setReq(DEFAULT_REQ[c.position || ''] || '');
@@ -53,21 +58,31 @@ export function AiScreeningTab({ candidates, screenings, generatePrompt, runScre
   const onGenerate = async () => {
     if (!sel) return;
     setBusy(true);
-    const d = await generatePrompt(sel.id, req || undefined);
-    setBusy(false);
-    if (d.prompt) setPrompt(d.prompt);
+    try {
+      const d = await generatePrompt(sel.id, req || undefined);
+      if (d && d.prompt) setPrompt(d.prompt);
+    } catch (e: any) {
+      MessagePlugin.error('生成提示词失败：' + (e?.message || e));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const onRun = async () => {
     if (!sel) return;
     setBusy(true);
-    const d = await runScreening(sel.id, req || undefined);
-    setBusy(false);
-    if (d.ok && d.record) {
-      setResult(d.record);
-      MessagePlugin.success(d.message);
-    } else {
-      MessagePlugin.error(d.error || '二筛失败');
+    try {
+      const d = await runScreening(sel.id, req || undefined);
+      if (d && d.ok && d.record) {
+        setResult(d.record);
+        MessagePlugin.success(d.message || '二筛完成');
+      } else {
+        MessagePlugin.error((d && (d.error || d.message)) || '二筛失败');
+      }
+    } catch (e: any) {
+      MessagePlugin.error('二筛执行失败：' + (e?.message || e));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -189,21 +204,26 @@ export function AiScreeningTab({ candidates, screenings, generatePrompt, runScre
   );
 }
 
-function DecisionBadge({ decision, confidence }: { decision: string; confidence: number }) {
-  const m = DECISION_META[decision] || DECISION_META.review;
+function DecisionBadge({ decision, confidence }: { decision?: string; confidence?: number }) {
+  const d = decision || 'review';
+  const m = DECISION_META[d] || DECISION_META.review;
+  const cf = typeof confidence === 'number' ? confidence : 0;
   return (
     <span
       className="px-1.5 py-0.5 rounded text-[11px] font-medium"
       style={{ color: m.color, backgroundColor: m.bg }}
     >
-      {confidence}% · {m.label}
+      {cf}% · {m.label}
     </span>
   );
 }
 
 function ResultPanel({ rec }: { rec: ScreenRecord }) {
-  const m = DECISION_META[rec.decision] || DECISION_META.review;
-  const Icon = rec.decision === 'pass' ? CheckCircle2 : rec.decision === 'reject' ? XCircle : AlertCircle;
+  const safe = rec || ({} as ScreenRecord);
+  const decision = safe.decision || 'review';
+  const m = DECISION_META[decision] || DECISION_META.review;
+  const Icon = decision === 'pass' ? CheckCircle2 : decision === 'reject' ? XCircle : AlertCircle;
+  const confidence = typeof safe.confidence === 'number' ? safe.confidence : 0;
   return (
     <div className="rounded-lg p-3 flex flex-col gap-2" style={{ backgroundColor: m.bg, border: `1px solid ${m.color}` }}>
       <div className="flex items-center justify-between">
@@ -212,17 +232,23 @@ function ResultPanel({ rec }: { rec: ScreenRecord }) {
           {m.label}
         </span>
         <span className="text-lg font-semibold tabular-nums" style={{ color: m.color }}>
-          {rec.confidence}%
+          {confidence}%
         </span>
       </div>
       <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#fff' }}>
-        <div className="h-full rounded-full" style={{ width: `${rec.confidence}%`, backgroundColor: m.color }} />
+        <div className="h-full rounded-full" style={{ width: `${confidence}%`, backgroundColor: m.color }} />
       </div>
       <div className="text-[11px]" style={{ color: 'var(--td-text-color-secondary)' }}>
-        命中关键技能：<span className="text-green-700">{(rec.matched_skills || []).join('、') || '无'}</span>
+        命中关键技能：<span className="text-green-700">{(safe.matched_skills || []).join('、') || '无'}</span>
       </div>
+      {safe.candidate_name && (
+        <div className="text-[11px]" style={{ color: 'var(--td-text-color-placeholder)' }}>
+          候选人：{safe.candidate_name}
+          {safe.position ? ` · ${safe.position}` : ''}
+        </div>
+      )}
       <div className="text-[11px]" style={{ color: 'var(--td-text-color-secondary)' }}>
-        {rec.note}
+        {safe.note || ''}
       </div>
     </div>
   );

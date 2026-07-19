@@ -168,6 +168,7 @@ export function OverviewTab({ stats, anomalies, candidates, running, control, in
                   {c.name}
                   <span className="ml-1 text-xs" style={{ color: 'var(--td-text-color-placeholder)' }}>
                     {c.position || '—'}
+                    {c.education || c.school ? ` · ${c.education || '—'}/${c.school || '—'}` : ''}
                   </span>
                 </span>
                 <StageTag label={stageLabel(c.stage)} />

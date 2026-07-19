@@ -28,6 +28,8 @@ interface Cand {
   email: string | null;
   position: string | null;
   source: string | null;
+  education: string | null; // 学历（初筛硬闸口）
+  school: string | null; // 院校（初筛硬闸口）
   resume_path: string | null;
   stage: StageKey;
   stage_history: Array<{ stage: string; timestamp: string; note: string }>;
@@ -171,21 +173,56 @@ interface Profile {
   interviewer2: string;
   phone: string;
   email: string;
+  education: string;
+  school: string;
 }
 const PROFILES: Profile[] = [
-  { name: '张伟', position: '前端工程师', dept: '研发', source: 'BOSS直聘', exp: '3年', tags: ['React', 'TypeScript'], interviewer: '李工', interviewer2: '王总监', phone: '13800001111', email: 'zhangwei@demo.com' },
-  { name: '李娜', position: '产品经理', dept: '产品', source: '企业微信', exp: '5年', tags: ['B端', '数据驱动'], interviewer: '陈经理', interviewer2: '赵总', phone: '13800002222', email: 'lina@demo.com' },
-  { name: '王强', position: 'Java工程师', dept: '研发', source: 'BOSS直聘', exp: '4年', tags: ['SpringCloud', '高并发'], interviewer: '李工', interviewer2: '王总监', phone: '13800003333', email: 'wangqiang@demo.com' },
-  { name: '刘洋', position: 'UI设计师', dept: '设计', source: '内推', exp: '2年', tags: ['Figma', '交互'], interviewer: '孙设计', interviewer2: '周导', phone: '13800004444', email: 'liuyang@demo.com' },
-  { name: '陈静', position: '测试工程师', dept: '研发', source: 'BOSS直聘', exp: '3年', tags: ['自动化', '性能'], interviewer: '李工', interviewer2: '王总监', phone: '13800005555', email: 'chenjing@demo.com' },
-  { name: '杨光', position: '数据分析师', dept: '数据', source: '企业微信', exp: '4年', tags: ['SQL', 'Python'], interviewer: '钱博', interviewer2: '孙总', phone: '13800006666', email: 'yangguang@demo.com' },
-  { name: '赵磊', position: '后端工程师', dept: '研发', source: '内推', exp: '6年', tags: ['Go', '微服务'], interviewer: '李工', interviewer2: '王总监', phone: '13800007777', email: 'zhaolei@demo.com' },
-  { name: '周敏', position: '运营专员', dept: '运营', source: 'BOSS直聘', exp: '2年', tags: ['社群', '内容'], interviewer: '吴运营', interviewer2: '郑总', phone: '13800008888', email: 'zhoumin@demo.com' },
-  { name: '吴桐', position: '算法工程师', dept: '算法', source: '企业微信', exp: '5年', tags: ['NLP', '深度学习'], interviewer: '冯博', interviewer2: '蒋总', phone: '13800009999', email: 'wutong@demo.com' },
-  { name: '郑爽', position: 'HRBP', dept: 'HR', source: '内推', exp: '3年', tags: ['组织发展', '招聘'], interviewer: '沈HR', interviewer2: '韩总', phone: '13800010000', email: 'zhengshuang@demo.com' },
-  { name: '孙浩', position: '前端工程师', dept: '研发', source: 'BOSS直聘', exp: '4年', tags: ['Vue', '可视化'], interviewer: '李工', interviewer2: '王总监', phone: '13800011111', email: 'sunhao@demo.com' },
-  { name: '马琳', position: '产品经理', dept: '产品', source: '企业微信', exp: '6年', tags: ['C端', '增长'], interviewer: '陈经理', interviewer2: '赵总', phone: '13800012222', email: 'malin@demo.com' },
+  { name: '张伟', position: '前端工程师', dept: '研发', source: 'BOSS直聘', exp: '3年', tags: ['React', 'TypeScript'], interviewer: '李工', interviewer2: '王总监', phone: '13800001111', email: 'zhangwei@demo.com', education: '本科', school: '985' },
+  { name: '李娜', position: '产品经理', dept: '产品', source: '企业微信', exp: '5年', tags: ['B端', '数据驱动'], interviewer: '陈经理', interviewer2: '赵总', phone: '13800002222', email: 'lina@demo.com', education: '硕士', school: '211' },
+  { name: '王强', position: 'Java工程师', dept: '研发', source: 'BOSS直聘', exp: '4年', tags: ['SpringCloud', '高并发'], interviewer: '李工', interviewer2: '王总监', phone: '13800003333', email: 'wangqiang@demo.com', education: '本科', school: '211' },
+  { name: '刘洋', position: 'UI设计师', dept: '设计', source: '内推', exp: '2年', tags: ['Figma', '交互'], interviewer: '孙设计', interviewer2: '周导', phone: '13800004444', email: 'liuyang@demo.com', education: '本科', school: '双一流' },
+  { name: '陈静', position: '测试工程师', dept: '研发', source: 'BOSS直聘', exp: '3年', tags: ['自动化', '性能'], interviewer: '李工', interviewer2: '王总监', phone: '13800005555', email: 'chenjing@demo.com', education: '本科', school: '211' },
+  { name: '杨光', position: '数据分析师', dept: '数据', source: '企业微信', exp: '4年', tags: ['SQL', 'Python'], interviewer: '钱博', interviewer2: '孙总', phone: '13800006666', email: 'yangguang@demo.com', education: '硕士', school: '985' },
+  { name: '赵磊', position: '后端工程师', dept: '研发', source: '内推', exp: '6年', tags: ['Go', '微服务'], interviewer: '李工', interviewer2: '王总监', phone: '13800007777', email: 'zhaolei@demo.com', education: '本科', school: '985' },
+  { name: '周敏', position: '运营专员', dept: '运营', source: 'BOSS直聘', exp: '2年', tags: ['社群', '内容'], interviewer: '吴运营', interviewer2: '郑总', phone: '13800008888', email: 'zhoumin@demo.com', education: '本科', school: '双一流' },
+  { name: '吴桐', position: '算法工程师', dept: '算法', source: '企业微信', exp: '5年', tags: ['NLP', '深度学习'], interviewer: '冯博', interviewer2: '蒋总', phone: '13800009999', email: 'wutong@demo.com', education: '博士', school: '海外名校' },
+  { name: '郑爽', position: 'HRBP', dept: 'HR', source: '内推', exp: '3年', tags: ['组织发展', '招聘'], interviewer: '沈HR', interviewer2: '韩总', phone: '13800010000', email: 'zhengshuang@demo.com', education: '本科', school: '211' },
+  { name: '孙浩', position: '前端工程师', dept: '研发', source: 'BOSS直聘', exp: '4年', tags: ['Vue', '可视化'], interviewer: '李工', interviewer2: '王总监', phone: '13800011111', email: 'sunhao@demo.com', education: '硕士', school: '985' },
+  { name: '马琳', position: '产品经理', dept: '产品', source: '企业微信', exp: '6年', tags: ['C端', '增长'], interviewer: '陈经理', interviewer2: '赵总', phone: '13800012222', email: 'malin@demo.com', education: '本科', school: '211' },
 ];
+
+// ===== 初筛硬闸口（强制定死，不可由 HR 随意修改）=====
+// 学历门槛：本科及以上，未达标直接淘汰
+// 院校门槛：985 / 211 / 双一流 / 海外名校，未达标直接淘汰
+const EDU_RANK: Record<string, number> = { 高中: 1, 中专: 2, 大专: 3, 本科: 4, 硕士: 5, 博士: 6 };
+const MIN_EDU = '本科';
+const ALLOWED_SCHOOLS = ['985', '211', '双一流', '海外名校'];
+
+export function evaluateHardGates(c: { education: string | null; school: string | null }): {
+  passed: boolean;
+  failed: 'missing' | 'education' | 'school' | null;
+  detail: string;
+} {
+  if (!c.education || !c.school) {
+    return { passed: false, failed: 'missing', detail: '缺少学历 / 院校信息，硬闸口无法判定' };
+  }
+  const er = EDU_RANK[c.education] || 0;
+  const mr = EDU_RANK[MIN_EDU] || 0;
+  if (er < mr) {
+    return { passed: false, failed: 'education', detail: `学历「${c.education}」未达本科门槛` };
+  }
+  if (!ALLOWED_SCHOOLS.includes(c.school)) {
+    return { passed: false, failed: 'school', detail: `院校「${c.school}」非 985/211/双一流/海外名校` };
+  }
+  return { passed: true, failed: null, detail: '学历 / 院校均达标' };
+}
+
+export const INITIAL_HARD_GATES = {
+  minEducation: MIN_EDU,
+  allowedSchools: ALLOWED_SCHOOLS,
+  educationLabel: `学历门槛：${MIN_EDU}及以上（未达标直接淘汰）`,
+  schoolLabel: `院校门槛：${ALLOWED_SCHOOLS.join(' / ')}（未达标直接淘汰）`,
+};
 
 function defaultRequirement(position: string | null, dept: string): string {
   const map: Record<string, string> = {
@@ -240,19 +277,26 @@ function computeScreeningConfidence(c: Cand, requirement: string): { confidence:
 
 function buildInitialScreeningPrompt(c: Cand, requirement: string): string {
   const tags = (c.tags || []).join('、') || '无';
+  const edu = c.education || '（未填写）';
+  const sch = c.school || '（未填写）';
   return [
     '你是一名资深招聘官，请基于「岗位通用要求」与「候选人简历」进行 AI 初筛评估（首轮筛选）。',
     '',
     '【岗位通用要求】', requirement,
     '',
-    '【候选人】', `姓名：${c.name}`, `应聘岗位：${c.position || '未指定'}`, `技能标签：${tags}`, `简历来源：${c.source || '未指定'}`,
+    '【候选人】', `姓名：${c.name}`, `应聘岗位：${c.position || '未指定'}`, `学历：${edu}`, `院校：${sch}`, `技能标签：${tags}`, `简历来源：${c.source || '未指定'}`,
+    '',
+    '【强制硬闸口（不可妥协，必须最先核验）】',
+    `1. 学历门槛：本科及以上，候选人学历「${edu}」未达本科 → 直接淘汰；`,
+    `2. 院校门槛：985 / 211 / 双一流 / 海外名校，候选人院校「${sch}」不在此列 → 直接淘汰；`,
+    '3. 任一硬闸口不满足，无论技能多匹配都判淘汰，并在结论中明确写出未达标的闸口；',
+    '4. 硬闸口达标后，再结合技能匹配度给出 0-100 置信度。',
     '',
     '【输出要求】',
-    '1. 评估基础匹配度，给出 0-100 的初筛置信度评分；',
-    '2. 置信度 ≥ 60：直接过（建议进入用人部门二筛）；',
-    '3. 置信度 35-59：人工复核（建议 HR 确认）；',
-    '4. 置信度 < 35：淘汰；',
-    '5. 列出命中的基础技能。',
+    '1. 置信度 ≥ 60：直接过（建议进入用人部门二筛）；',
+    '2. 置信度 35-59：人工复核（建议 HR 确认）；',
+    '3. 置信度 < 35：淘汰；',
+    '4. 列出命中的基础技能与未达标的硬闸口（如有）。',
   ].join('\n');
 }
 
@@ -362,19 +406,54 @@ export class DemoEngine {
   }
 
   // ---- AI 初筛 ----
-  runAIInitialScreening(candidateId: string, requirement?: string): { ok: boolean; message: string; record?: ScreenRec; candidate?: Cand } {
+  runAIInitialScreening(candidateId: string, requirement?: string): { ok: boolean; message: string; error?: string; record?: ScreenRec; candidate?: Cand } {
     const c = this.candidates.find((x) => x.id === candidateId);
-    if (!c) return { ok: false, message: '候选人不存在' };
-    if (c.stage !== 'initial_screening') return { ok: false, message: `${c.name} 当前不在「AI初筛」阶段` };
+    if (!c) return { ok: false, message: '候选人不存在', error: '候选人不存在' };
+    if (c.stage !== 'initial_screening') return { ok: false, message: `${c.name} 当前不在「AI初筛」阶段，无法初筛`, error: `${c.name} 当前不在「AI初筛」阶段` };
     if (c.parked) c.parked = 0;
     const profile = PROFILES.find((p) => p.name === c.name);
     const req = requirement || defaultRequirement(c.position, profile?.dept || '');
+
+    // ① 先过初筛硬闸口（学历 / 院校），未达标直接淘汰或转人工复核
+    const gate = evaluateHardGates(c);
+    if (!gate.passed) {
+      let decision: 'pass' | 'review' | 'reject';
+      let confidence: number;
+      let note: string;
+      if (gate.failed === 'missing') {
+        decision = 'review';
+        confidence = 40;
+        note = `初筛硬闸口未通过：${gate.detail}，转人工复核（请 HR 在简历中补充学历 / 院校）`;
+      } else {
+        decision = 'reject';
+        confidence = 15;
+        note = `初筛硬闸口未通过：${gate.detail}，直接淘汰`;
+      }
+      const rec: ScreenRec = { id: uid(), candidate_id: c.id, candidate_name: c.name, position: c.position, dept_requirement: req, prompt: buildInitialScreeningPrompt(c, req), confidence, decision, matched_skills: [], note, phase: 'initial', created_at: nowISO() };
+      this.screenings.unshift(rec);
+      this.broadcast({ type: 'screening', record: rec });
+      if (decision === 'reject') {
+        c.remark = `AI初筛淘汰（硬闸口）：${gate.detail}`;
+        c.updated_at = nowISO();
+        const log = this.addLog('screen', `🤖 AI 初筛：${c.name} 硬闸口未通过 → 淘汰（${gate.detail}）`, c.id);
+        this.broadcast({ type: 'agent_log', log });
+        this.broadcast({ type: 'candidate_update', candidate: c });
+      } else {
+        const log = this.addLog('screen', `🤖 AI 初筛：${c.name} 硬闸口信息缺失 → 人工复核`, c.id);
+        this.broadcast({ type: 'agent_log', log });
+      }
+      this.broadcast({ type: 'anomalies', anomalies: this.computeAnomalies() });
+      return { ok: true, message: note, record: rec, candidate: c };
+    }
+
+    // ② 硬闸口达标 → 进入技能匹配评分
     const { confidence, matched } = computeInitialScreeningConfidence(c, req);
     let decision: 'pass' | 'review' | 'reject';
     let note: string;
-    if (confidence >= 60) { decision = 'pass'; note = '初筛置信度 ≥60，AI 判定直接过，已自动推进至拉群协作'; }
-    else if (confidence >= 35) { decision = 'review'; note = '初筛置信度 35-59，建议人工复核，已挂起待 HR 确认'; }
-    else { decision = 'reject'; note = '初筛置信度 <35，AI 判定淘汰'; }
+    const gateOk = '初筛硬闸口：学历 / 院校达标 ✓。';
+    if (confidence >= 60) { decision = 'pass'; note = gateOk + ' 初筛置信度 ≥60，AI 判定直接过，已自动推进至拉群协作'; }
+    else if (confidence >= 35) { decision = 'review'; note = gateOk + ' 初筛置信度 35-59，建议人工复核，已挂起待 HR 确认'; }
+    else { decision = 'reject'; note = gateOk + ' 初筛置信度 <35，AI 判定淘汰'; }
     const rec: ScreenRec = { id: uid(), candidate_id: c.id, candidate_name: c.name, position: c.position, dept_requirement: req, prompt: buildInitialScreeningPrompt(c, req), confidence, decision, matched_skills: matched, note, phase: 'initial', created_at: nowISO() };
     this.screenings.unshift(rec);
     this.broadcast({ type: 'screening', record: rec });
@@ -397,10 +476,10 @@ export class DemoEngine {
   }
 
   // ---- AI 二筛 ----
-  runAIScreening(candidateId: string, deptRequirement?: string): { ok: boolean; message: string; record?: ScreenRec; candidate?: Cand } {
+  runAIScreening(candidateId: string, deptRequirement?: string): { ok: boolean; message: string; error?: string; record?: ScreenRec; candidate?: Cand } {
     const c = this.candidates.find((x) => x.id === candidateId);
-    if (!c) return { ok: false, message: '候选人不存在' };
-    if (c.stage !== 'secondary_screening') return { ok: false, message: `${c.name} 当前不在「部门二筛」阶段` };
+    if (!c) return { ok: false, message: '候选人不存在', error: '候选人不存在' };
+    if (c.stage !== 'secondary_screening') return { ok: false, message: `${c.name} 当前不在「部门二筛」阶段，无法二筛`, error: `${c.name} 当前不在「部门二筛」阶段` };
     if (c.parked) c.parked = 0;
     const profile = PROFILES.find((p) => p.name === c.name);
     const req = deptRequirement || defaultRequirement(c.position, profile?.dept || '');
@@ -485,14 +564,17 @@ export class DemoEngine {
   }
 
   // ---- HR 上传 ----
-  hrUploadResume(input: { name: string; position?: string; source?: string; phone?: string; email?: string; tags?: string[]; availability?: string[] }): { ok: boolean; message: string; candidate?: Cand } {
+  hrUploadResume(input: { name: string; position?: string; source?: string; phone?: string; email?: string; tags?: string[]; availability?: string[]; education?: string; school?: string }): { ok: boolean; message: string; candidate?: Cand } {
     if (!input.name || !input.name.trim()) return { ok: false, message: '候选人姓名不能为空' };
     const profile = PROFILES.find((p) => p.name === input.name.trim());
     const availability = input.availability && input.availability.length > 0 ? input.availability : slotsFor(hashName(input.name), 3);
     const ts = nowISO();
     const c: Cand = {
       id: uid(), name: input.name.trim(), phone: input.phone || profile?.phone || null, email: input.email || profile?.email || null,
-      position: input.position || profile?.position || null, source: input.source || profile?.source || 'HR收集', resume_path: null,
+      position: input.position || profile?.position || null, source: input.source || profile?.source || 'HR收集',
+      education: input.education && input.education.trim() ? input.education.trim() : (profile?.education || null),
+      school: input.school && input.school.trim() ? input.school.trim() : (profile?.school || null),
+      resume_path: null,
       stage: 'resume_collection', stage_history: [{ stage: 'resume_collection', timestamp: ts, note: 'HR 收集并上传简历' }],
       tags: input.tags && input.tags.length ? input.tags : profile ? profile.tags : [], interview_time: null, interviewers: [],
       interview_result: null, retest_time: null, retest_result: null, remark: null, availability, parked: 0, created_at: ts, updated_at: ts,
@@ -687,16 +769,16 @@ export class DemoEngine {
     const now = new Date();
     const stale = new Date(now.getTime() - 18 * 60 * 1000).toISOString();
     const staleSeeds = [
-      { name: '黄涛', position: '运维工程师', source: 'BOSS直聘', stage: 'resume_collection' as StageKey, note: '简历已收集，Agent 识别缓慢', updated_at: stale },
-      { name: '林芳', position: '财务专员', source: '内推', stage: 'secondary_screening' as StageKey, note: '部门二筛长时间未处理', updated_at: stale },
-      { name: '何军', position: '销售经理', source: '企业微信', stage: 'interview_list' as StageKey, note: '群面名单已就绪，迟迟未约面', updated_at: stale },
+      { name: '黄涛', position: '运维工程师', source: 'BOSS直聘', stage: 'resume_collection' as StageKey, note: '简历已收集，Agent 识别缓慢', updated_at: stale, education: '大专', school: '普通本科' },
+      { name: '林芳', position: '财务专员', source: '内推', stage: 'secondary_screening' as StageKey, note: '部门二筛长时间未处理', updated_at: stale, education: '本科', school: '普通本科' },
+      { name: '何军', position: '销售经理', source: '企业微信', stage: 'interview_list' as StageKey, note: '群面名单已就绪，迟迟未约面', updated_at: stale, education: '本科', school: '211' },
     ];
     const staleIds: Record<string, string> = {};
     for (const s of staleSeeds) {
       const id = uid();
       staleIds[s.name] = id;
       this.candidates.push({
-        id, name: s.name, phone: null, email: null, position: s.position, source: s.source, resume_path: null,
+        id, name: s.name, phone: null, email: null, position: s.position, source: s.source, education: s.education, school: s.school, resume_path: null,
         stage: s.stage, stage_history: [{ stage: s.stage, timestamp: s.updated_at, note: s.note }], tags: [],
         interview_time: null, interviewers: [], interview_result: null, retest_time: null, retest_result: null, remark: s.note,
         availability: slotsFor(hashName(s.name), 3), parked: 1, created_at: s.updated_at, updated_at: s.updated_at,
@@ -724,9 +806,10 @@ export class DemoEngine {
     for (const p of flow) {
       const id = uid(); flowIds[p.name] = id;
       const ts = nowISO();
+      const prof = PROFILES.find((x) => x.name === p.name);
       this.candidates.push({
         id, name: p.name, phone: '138' + String(Math.floor(10000000 + Math.random() * 89999999)), email: p.email, position: p.position, source: p.source,
-        resume_path: null, stage: p.stage, stage_history: [{ stage: p.stage, timestamp: ts, note: 'HR 收集并上传简历' }], tags: p.tags,
+        education: prof?.education || null, school: prof?.school || null, resume_path: null, stage: p.stage, stage_history: [{ stage: p.stage, timestamp: ts, note: 'HR 收集并上传简历' }], tags: p.tags,
         interview_time: null, interviewers: [], interview_result: (p as any).interview_result || null, retest_time: null, retest_result: null, remark: null,
         availability: slotsFor(hashName(p.name), 3), parked: 0, created_at: ts, updated_at: ts,
       });

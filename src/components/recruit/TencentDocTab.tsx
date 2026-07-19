@@ -64,7 +64,7 @@ interface ParsedFile {
 }
 
 export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
-  const [form, setForm] = useState({ name: '', position: '', source: 'HR收集', phone: '', email: '', tags: '' });
+  const [form, setForm] = useState({ name: '', position: '', source: 'HR收集', phone: '', email: '', tags: '', education: '', school: '' });
   const [busy, setBusy] = useState(false);
 
   // 拖拽 / 文件夹导入
@@ -93,6 +93,8 @@ export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
       source: form.source,
       phone: form.phone.trim() || undefined,
       email: form.email.trim() || undefined,
+      education: form.education.trim() || undefined,
+      school: form.school.trim() || undefined,
       tags: form.tags
         ? form.tags.split(/[,，、\s]+/).map((t) => t.trim()).filter(Boolean)
         : undefined,
@@ -100,7 +102,7 @@ export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
     setBusy(false);
     if (res.ok) {
       MessagePlugin.success(res.message);
-      setForm({ name: '', position: '', source: 'HR收集', phone: '', email: '', tags: '' });
+      setForm({ name: '', position: '', source: 'HR收集', phone: '', email: '', tags: '', education: '', school: '' });
     } else {
       MessagePlugin.error(res.error || '上传失败');
     }
@@ -237,6 +239,12 @@ export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
             <Field label="邮箱">
               <Input value={form.email} onChange={(v) => set('email', v as string)} placeholder="选填" />
             </Field>
+            <Field label="学历（初筛硬闸口 · 本科及以上）">
+              <Input value={form.education} onChange={(v) => set('education', v as string)} placeholder="如：本科 / 硕士 / 博士" />
+            </Field>
+            <Field label="院校（初筛硬闸口 · 985/211/双一流/海外名校）">
+              <Input value={form.school} onChange={(v) => set('school', v as string)} placeholder="如：985 / 211 / 双一流 / 海外名校" />
+            </Field>
             <Field label="技能标签（逗号分隔）">
               <Input value={form.tags} onChange={(v) => set('tags', v as string)} placeholder="如：React, TypeScript" />
             </Field>
@@ -270,6 +278,7 @@ export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
                   <th className="text-left font-medium py-2 px-2">姓名</th>
                   <th className="text-left font-medium py-2 px-2">应聘岗位</th>
                   <th className="text-left font-medium py-2 px-2">来源</th>
+                  <th className="text-left font-medium py-2 px-2">学历/院校</th>
                   <th className="text-left font-medium py-2 px-2">关键标签</th>
                   <th className="text-left font-medium py-2 px-2">当前阶段</th>
                   <th className="text-left font-medium py-2 px-2">收集时间</th>
@@ -298,6 +307,9 @@ export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
                       <Tag size="small" variant="light">
                         {c.source || '—'}
                       </Tag>
+                    </td>
+                    <td className="py-2 px-2 text-xs" style={{ color: 'var(--td-text-color-secondary)' }}>
+                      {c.education || '—'} · {c.school || '—'}
                     </td>
                     <td className="py-2 px-2" style={{ color: 'var(--td-text-color-secondary)' }}>
                       {(c.tags || []).join('、') || '—'}

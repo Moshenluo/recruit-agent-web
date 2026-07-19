@@ -57,6 +57,8 @@ export interface Candidate {
   email: string | null;
   position: string | null;
   source: string | null;
+  education: string | null;
+  school: string | null;
   stage: string;
   stage_history: Array<{ stage: string; timestamp: string; note: string }>;
   tags: string[];
