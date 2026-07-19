@@ -11,7 +11,7 @@ function loadPlaywright() {
 }
 const { chromium } = loadPlaywright();
 const EXE = 'C:\\Users\\Administrator\\.agent-browser\\browsers\\chrome-151.0.7922.34\\chrome.exe';
-const URL = process.env.DEMO_URL || 'http://localhost:4173';
+const URL = process.env.DEMO_URL || 'https://moshenluo.github.io/recruit-agent-web/';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const log = (...a) => console.log(...a);
 

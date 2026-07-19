@@ -10,7 +10,10 @@
     "typecheck": "tsc -p tsconfig.json",
     "preview": "vite preview",
     "server": "tsx server/index.ts",
-    "verify:demo": "node scripts/page-verify.cjs"
+    "verify:demo": "node scripts/page-verify.cjs",
+    "verify:gates": "node scripts/repro-gates.cjs",
+    "verify:screening": "node scripts/repro-screening.cjs",
+    "verify:stress": "node scripts/repro-stress.cjs"
   },
   "dependencies": {
     "@tdesign-react/aigc": "^0.1.0-alpha.1",
