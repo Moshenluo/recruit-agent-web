@@ -12,6 +12,7 @@
     "server": "tsx server/index.ts",
     "verify:demo": "node scripts/page-verify.cjs",
     "verify:gates": "node scripts/repro-gates.cjs",
+    "verify:edit": "node scripts/repro-edit.cjs",
     "verify:screening": "node scripts/repro-screening.cjs",
     "verify:stress": "node scripts/repro-stress.cjs"
   },
