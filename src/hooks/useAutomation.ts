@@ -249,6 +249,9 @@ export function useAutomation() {
           return [p.candidate, ...prev];
         });
         break;
+      case 'candidate_remove':
+        setCandidates((prev) => prev.filter((c) => c.id !== p.id));
+        break;
       case 'reset':
         if (!DEMO) {
           fetchCandidates();
@@ -345,6 +348,30 @@ export function useAutomation() {
     return d;
   }, [fetchCandidates, fetchScreenings]);
 
+  const updateCandidate = useCallback(async (id: string, patch: any) => {
+    if (DEMO) return getDemoEngine().updateCandidate(id, patch);
+    const r = await fetch('/api/hr/update-candidate', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...patch }),
+    });
+    const d = await r.json().catch(() => ({ ok: false, error: '更新失败' }));
+    if (r.ok) fetchCandidates();
+    return d;
+  }, [fetchCandidates]);
+
+  const deleteCandidate = useCallback(async (id: string) => {
+    if (DEMO) return getDemoEngine().deleteCandidate(id);
+    const r = await fetch('/api/hr/delete-candidate', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    const d = await r.json().catch(() => ({ ok: false, error: '删除失败' }));
+    if (r.ok) fetchCandidates();
+    return d;
+  }, [fetchCandidates]);
+
   const generatePrompt = useCallback(async (candidateId: string, deptRequirement?: string) => {
     if (DEMO) return getDemoEngine().generatePrompt(candidateId, deptRequirement);
     const r = await fetch('/api/ai-screening-prompt', {
@@ -437,6 +464,8 @@ export function useAutomation() {
     control,
     intervene,
     uploadResume,
+    updateCandidate,
+    deleteCandidate,
     generatePrompt,
     runScreening,
     generateInitialPrompt,

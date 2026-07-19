@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Button, Input, Tag, MessagePlugin } from 'tdesign-react';
-import { FileUp, FileText, CheckCircle2, UserPlus, FolderOpen, FilePlus2 } from 'lucide-react';
+import { Button, Input, Tag, MessagePlugin, Dialog } from 'tdesign-react';
+import { FileUp, FileText, CheckCircle2, UserPlus, FolderOpen, FilePlus2, Pencil, Trash2 } from 'lucide-react';
 import type { Candidate, TencentDoc } from '../../hooks/useAutomation';
 import { stageLabel } from '../../hooks/useAutomation';
 import { SectionCard, EmptyHint, StageTag, fmtDateTime } from './shared';
@@ -10,6 +10,8 @@ interface Props {
   candidates: Candidate[];
   tencentDoc: TencentDoc | null;
   uploadResume: (payload: any) => Promise<any>;
+  updateCandidate: (id: string, patch: any) => Promise<any>;
+  deleteCandidate: (id: string) => Promise<any>;
 }
 
 // 用于从简历正文中猜测技能标签（命中即作为初筛/二筛参考）
@@ -63,7 +65,7 @@ interface ParsedFile {
   error?: string;
 }
 
-export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
+export function TencentDocTab({ candidates, tencentDoc, uploadResume, updateCandidate, deleteCandidate }: Props) {
   const [form, setForm] = useState({ name: '', position: '', source: 'HR收集', phone: '', email: '', tags: '', education: '', school: '' });
   const [busy, setBusy] = useState(false);
 
@@ -73,6 +75,71 @@ export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
   const [busyBatch, setBusyBatch] = useState(false);
   const folderRef = useRef<HTMLInputElement>(null);
   const filesRef = useRef<HTMLInputElement>(null);
+
+  // 手动编辑 / 删除简历记录
+  const [editOpen, setEditOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', position: '', source: 'HR收集', phone: '', email: '', education: '', school: '', tags: '' });
+  const [editBusy, setEditBusy] = useState(false);
+  const [delOpen, setDelOpen] = useState(false);
+  const [delId, setDelId] = useState<string | null>(null);
+  const [delName, setDelName] = useState('');
+
+  const openEdit = (c: Candidate) => {
+    setEditId(c.id);
+    setEditForm({
+      name: c.name,
+      position: c.position || '',
+      source: c.source || 'HR收集',
+      phone: c.phone || '',
+      email: c.email || '',
+      education: c.education || '',
+      school: c.school || '',
+      tags: (c.tags || []).join('、'),
+    });
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editId) return;
+    if (!editForm.name.trim()) {
+      MessagePlugin.warning('姓名不能为空');
+      return;
+    }
+    setEditBusy(true);
+    const res = await updateCandidate(editId, {
+      name: editForm.name.trim(),
+      position: editForm.position.trim() || undefined,
+      source: editForm.source.trim() || undefined,
+      phone: editForm.phone.trim() || undefined,
+      email: editForm.email.trim() || undefined,
+      education: editForm.education.trim() || undefined,
+      school: editForm.school.trim() || undefined,
+      tags: editForm.tags ? editForm.tags.split(/[,，、\s]+/).map((t) => t.trim()).filter(Boolean) : [],
+    });
+    setEditBusy(false);
+    if (res?.ok) {
+      MessagePlugin.success(res.message || '已保存');
+      setEditOpen(false);
+    } else {
+      MessagePlugin.error(res?.error || res?.message || '保存失败');
+    }
+  };
+
+  const openDelete = (c: Candidate) => {
+    setDelId(c.id);
+    setDelName(c.name);
+    setDelOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!delId) return;
+    const res = await deleteCandidate(delId);
+    setDelOpen(false);
+    if (res?.ok) MessagePlugin.success(res.message || '已删除');
+    else MessagePlugin.error(res?.error || res?.message || '删除失败');
+    setDelId(null);
+  };
 
   useEffect(() => {
     folderRef.current?.setAttribute('webkitdirectory', '');
@@ -282,12 +349,13 @@ export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
                   <th className="text-left font-medium py-2 px-2">关键标签</th>
                   <th className="text-left font-medium py-2 px-2">当前阶段</th>
                   <th className="text-left font-medium py-2 px-2">收集时间</th>
+                  <th className="text-left font-medium py-2 px-2">操作</th>
                 </tr>
               </thead>
               <tbody>
                 {candidates.length === 0 && (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <EmptyHint text="暂无简历，HR 提交后将自动汇总至此" />
                     </td>
                   </tr>
@@ -320,6 +388,28 @@ export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
                     <td className="py-2 px-2 tabular-nums text-xs" style={{ color: 'var(--td-text-color-placeholder)' }}>
                       {fmtDateTime(c.created_at)}
                     </td>
+                    <td className="py-2 px-2">
+                      <div className="flex items-center gap-1">
+                        <button
+                          className="inline-flex items-center gap-0.5 text-xs px-1.5 py-1 rounded transition-colors"
+                          style={{ color: '#0052D9' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(0,82,217,0.08)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                          onClick={() => openEdit(c)}
+                        >
+                          <Pencil size={13} /> 编辑
+                        </button>
+                        <button
+                          className="inline-flex items-center gap-0.5 text-xs px-1.5 py-1 rounded transition-colors"
+                          style={{ color: '#E34D59' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(227,77,89,0.08)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                          onClick={() => openDelete(c)}
+                        >
+                          <Trash2 size={13} /> 删除
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -327,6 +417,57 @@ export function TencentDocTab({ candidates, tencentDoc, uploadResume }: Props) {
           </div>
         </SectionCard>
       </div>
+
+      {/* 编辑弹窗：手动修改 / 修复简历记录 */}
+      <Dialog
+        header="编辑候选人信息"
+        visible={editOpen}
+        onClose={() => setEditOpen(false)}
+        onConfirm={saveEdit}
+        confirmBtn={{ content: '保存', loading: editBusy }}
+        cancelBtn="取消"
+      >
+        <div className="flex flex-col gap-2.5">
+          <Field label="候选人姓名 *">
+            <Input value={editForm.name} onChange={(v) => setEditForm((f) => ({ ...f, name: v as string }))} placeholder="如：张三" />
+          </Field>
+          <Field label="应聘岗位">
+            <Input value={editForm.position} onChange={(v) => setEditForm((f) => ({ ...f, position: v as string }))} placeholder="如：前端工程师" />
+          </Field>
+          <Field label="简历来源">
+            <Input value={editForm.source} onChange={(v) => setEditForm((f) => ({ ...f, source: v as string }))} placeholder="HR收集 / BOSS / 内推" />
+          </Field>
+          <Field label="联系电话">
+            <Input value={editForm.phone} onChange={(v) => setEditForm((f) => ({ ...f, phone: v as string }))} placeholder="选填" />
+          </Field>
+          <Field label="邮箱">
+            <Input value={editForm.email} onChange={(v) => setEditForm((f) => ({ ...f, email: v as string }))} placeholder="选填" />
+          </Field>
+          <Field label="学历（初筛硬闸口 · 本科及以上）">
+            <Input value={editForm.education} onChange={(v) => setEditForm((f) => ({ ...f, education: v as string }))} placeholder="如：本科 / 硕士 / 博士" />
+          </Field>
+          <Field label="院校（初筛硬闸口 · 985/211/双一流/海外名校）">
+            <Input value={editForm.school} onChange={(v) => setEditForm((f) => ({ ...f, school: v as string }))} placeholder="如：985 / 211 / 双一流 / 海外名校" />
+          </Field>
+          <Field label="技能标签（顿号 / 逗号分隔）">
+            <Input value={editForm.tags} onChange={(v) => setEditForm((f) => ({ ...f, tags: v as string }))} placeholder="如：React、TypeScript" />
+          </Field>
+        </div>
+      </Dialog>
+
+      {/* 删除确认弹窗 */}
+      <Dialog
+        header="确认删除"
+        visible={delOpen}
+        onClose={() => setDelOpen(false)}
+        onConfirm={confirmDelete}
+        confirmBtn={{ content: '删除', theme: 'danger' }}
+        cancelBtn="取消"
+      >
+        <div className="text-sm" style={{ color: 'var(--td-text-color-secondary)' }}>
+          确认删除候选人「{delName}」？删除后该简历将从简历库中移除，此操作不可恢复。
+        </div>
+      </Dialog>
     </div>
   );
 }

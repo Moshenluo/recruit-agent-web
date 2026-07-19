@@ -589,6 +589,39 @@ export class DemoEngine {
     return { ok: true, message: `已收集 ${c.name} 的简历，Agent 已汇总至腾讯文档并继续推进`, candidate: c };
   }
 
+  // HR 手动修改 / 修复简历库中的某条记录
+  updateCandidate(id: string, patch: { name?: string; position?: string; source?: string; phone?: string; email?: string; education?: string; school?: string; tags?: string[] }): { ok: boolean; message: string; candidate?: Cand } {
+    const c = this.candidates.find((x) => x.id === id);
+    if (!c) return { ok: false, message: '候选人不存在' };
+    if (patch.name !== undefined) c.name = patch.name.trim() || c.name;
+    if (patch.position !== undefined) c.position = patch.position.trim() ? patch.position.trim() : null;
+    if (patch.source !== undefined) c.source = patch.source.trim() ? patch.source.trim() : null;
+    if (patch.phone !== undefined) c.phone = patch.phone.trim() ? patch.phone.trim() : null;
+    if (patch.email !== undefined) c.email = patch.email.trim() ? patch.email.trim() : null;
+    if (patch.education !== undefined) c.education = patch.education.trim() ? patch.education.trim() : null;
+    if (patch.school !== undefined) c.school = patch.school.trim() ? patch.school.trim() : null;
+    if (patch.tags !== undefined) c.tags = Array.isArray(patch.tags) ? patch.tags.map((t) => String(t).trim()).filter(Boolean) : c.tags;
+    c.updated_at = nowISO();
+    this.aggregateTencentDoc();
+    this.broadcast({ type: 'candidate_update', candidate: c });
+    this.broadcast({ type: 'anomalies', anomalies: this.computeAnomalies() });
+    this.broadcast({ type: 'stats', stats: this.getStats() });
+    return { ok: true, message: `已更新 ${c.name} 的简历信息`, candidate: c };
+  }
+
+  // HR 手动删除简历库中的某条记录
+  deleteCandidate(id: string): { ok: boolean; message: string } {
+    const idx = this.candidates.findIndex((x) => x.id === id);
+    if (idx < 0) return { ok: false, message: '候选人不存在' };
+    const name = this.candidates[idx].name;
+    this.candidates.splice(idx, 1);
+    this.aggregateTencentDoc();
+    this.broadcast({ type: 'candidate_remove', id });
+    this.broadcast({ type: 'anomalies', anomalies: this.computeAnomalies() });
+    this.broadcast({ type: 'stats', stats: this.getStats() });
+    return { ok: true, message: `已删除 ${name}` };
+  }
+
   // ---- 面试官 ----
   saveInterviewer(payload: { id?: string; name: string; dept?: string | null; role?: string | null; available_slots: string[] }): { interviewer: Interviewer } {
     let iv = payload.id ? this.interviewers.find((i) => i.id === payload.id) : undefined;

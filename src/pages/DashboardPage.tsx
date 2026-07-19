@@ -111,7 +111,7 @@ export function DashboardPage() {
           />
         )}
         {tab === 'doc' && (
-          <TencentDocTab candidates={a.candidates} tencentDoc={a.tencentDoc} uploadResume={a.uploadResume} />
+          <TencentDocTab candidates={a.candidates} tencentDoc={a.tencentDoc} uploadResume={a.uploadResume} updateCandidate={a.updateCandidate} deleteCandidate={a.deleteCandidate} />
         )}
         {tab === 'initial' && (
           <InitialScreeningTab
