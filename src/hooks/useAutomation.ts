@@ -350,26 +350,39 @@ export function useAutomation() {
 
   const updateCandidate = useCallback(async (id: string, patch: any) => {
     if (DEMO) return getDemoEngine().updateCandidate(id, patch);
-    const r = await fetch('/api/hr/update-candidate', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, ...patch }),
-    });
-    const d = await r.json().catch(() => ({ ok: false, error: '更新失败' }));
-    if (r.ok) fetchCandidates();
-    return d;
+    try {
+      const r = await fetch(`/api/candidates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        fetchCandidates();
+        return { ok: true, message: '已保存', candidate: d.candidate };
+      }
+      return { ok: false, error: d.error || '更新失败' };
+    } catch (e: any) {
+      return { ok: false, error: e?.message || '更新失败' };
+    }
   }, [fetchCandidates]);
 
   const deleteCandidate = useCallback(async (id: string) => {
     if (DEMO) return getDemoEngine().deleteCandidate(id);
-    const r = await fetch('/api/hr/delete-candidate', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
-    const d = await r.json().catch(() => ({ ok: false, error: '删除失败' }));
-    if (r.ok) fetchCandidates();
-    return d;
+    try {
+      const r = await fetch(`/api/candidates/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        fetchCandidates();
+        return { ok: true, message: '已删除' };
+      }
+      return { ok: false, error: d.error || '删除失败' };
+    } catch (e: any) {
+      return { ok: false, error: e?.message || '删除失败' };
+    }
   }, [fetchCandidates]);
 
   const generatePrompt = useCallback(async (candidateId: string, deptRequirement?: string) => {
